@@ -118,21 +118,22 @@ def get_seller(soup):
 def get_manufacturer(soup):
     try:
         manufacturer=soup.find("table", attrs={"id":'productDetails_detailBullets_sections1'}).find_all(attrs={"class":'a-size-base prodDetAttrValue'})[2].text
-        return manufacturer
+        
     
-    except AttributeError:
+    except :
         try:
             a=len(soup.find("div", attrs={"id":'detailBulletsWrapper_feature_div'}).find_all("span"))
             correct='Manufacturer'
             for i in range(a):
-                w=new_soup.find("div", attrs={"id":'detailBulletsWrapper_feature_div'}).find_all("span")[i].text.replace("                                    ","")[:12]
+                w=soup.find("div", attrs={"id":'detailBulletsWrapper_feature_div'}).find_all("span")[i].text.replace("                                    ","")[:12]
                 if w==correct:
-                    manufacturer=new_soup.find("div", attrs={"id":'detailBulletsWrapper_feature_div'}).find_all("span")[i+1].text
+                    manufacturer=soup.find("div", attrs={"id":'detailBulletsWrapper_feature_div'}).find_all("span")[i+1].text
                     break
             return manufacturer
         except:
             manufacturer = ""
             return manufacturer
+    return manufacturer
         
 @st.experimental_memo
 def convert_df(df):
@@ -143,122 +144,127 @@ def convert_df(df):
 
 
 def main():
-    raw_text = st.text_area("Type your URL here .....")
     int_val = st.slider('end  page', min_value=1, max_value=10, value=5, step=1)
-    if st.button("Extract"):
-
-
-        # add your user agent 
-        # Headers for request
-        HEADERS = ({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36', 'Accept-Language': 'en-INR, en;q=0.5'}) 
-
-        # The webpage URL
-        amazon_url=raw_text
-
-        # HTTP Request
-        webpage = requests.get(amazon_url, headers=HEADERS)
-
-        # Soup Object containing all data
-        soup = BeautifulSoup(webpage.content, "html.parser")
-
-        # Fetch links as List of Tag Objects
-        links = soup.find_all("a", attrs={'class':'a-link-normal s-no-outline'})
-
-        # Store the links
-        links_list = []
-
-        # Loop for extracting links from Tag Objects
-        for link in links:
-                links_list.append(link.get('href'))
-
-        d = {"Product URL":[],"Product Name":[], "Product Price":[], "Rating":[], "Number of reviews":[],"Availability":[],"ASIN":[],"Product Description":[],"Sold by":[],"Manufacturer":[]}
+    try:
+        raw_text = st.text_area("Type your URL here .....")
         
-        # Loop for extracting product details from each link 
-        for link in links_list:
-            new_webpage = requests.get("https://www.amazon.in" + link, headers=HEADERS)
+        if st.button("Extract"):
 
-            new_soup = BeautifulSoup(new_webpage.content, "html.parser")
 
-            # Function calls to display all necessary product information
-            d["Product URL"].append("https://www.amazon.in"+link)
-            d['Product Name'].append(get_title(new_soup))
-            d['Product Price'].append(get_price(new_soup))
-            d['Rating'].append(get_rating(new_soup))
-            d['Number of reviews'].append(get_review_count(new_soup))
-            d['Availability'].append(get_availability(new_soup))
-            d['ASIN'].append(get_asin("https://www.amazon.in" + link,new_soup))
-            d['Product Description'].append(get_product_description(new_soup))
-            d['Sold by'].append(get_seller(new_soup))
-            d['Manufacturer'].append(get_manufacturer(new_soup))
-        
+            # add your user agent 
+            # Headers for request
+            HEADERS = ({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36', 'Accept-Language': 'en-INR, en;q=0.5'}) 
+
+            # The webpage URL
+            amazon_url=raw_text
+
+            # HTTP Request
+            webpage = requests.get(amazon_url, headers=HEADERS)
+
+            # Soup Object containing all data
+            soup = BeautifulSoup(webpage.content, "html.parser")
+
+            # Fetch links as List of Tag Objects
+            links = soup.find_all("a", attrs={'class':'a-link-normal s-no-outline'})
+
+            # Store the links
+            links_list = []
+
+            # Loop for extracting links from Tag Objects
+            for link in links:
+                    links_list.append(link.get('href'))
+
+            d = {"Product URL":[],"Product Name":[], "Product Price":[], "Rating":[], "Number of reviews":[],"Availability":[],"ASIN":[],"Product Description":[],"Sold by":[],"Manufacturer":[]}
             
-        for i in range(0,int_val-1):
-            if i == 0:
-                second_page_url="https://amazon.in" + soup.find_all("a", attrs={'class':'s-pagination-item s-pagination-button'})[0].get("href")
-                webpage = requests.get(second_page_url, headers=HEADERS)
-                soup=BeautifulSoup(webpage.content,"html.parser")
-                # Fetch links as List of Tag Objects
-                links = soup.find_all("a", attrs={'class':'a-link-normal s-no-outline'})
+            # Loop for extracting product details from each link 
+            for link in links_list:
+                new_webpage = requests.get("https://www.amazon.in" + link, headers=HEADERS)
 
-                # Store the links
-                links_list = []
+                new_soup = BeautifulSoup(new_webpage.content, "html.parser")
 
-                # Loop for extracting links from Tag Objects
-                for link in links:
-                    links_list.append(link.get('href')) 
-                for link in links_list:
-                    new_webpage = requests.get("https://www.amazon.in" + link, headers=HEADERS)
-
-                    new_soup = BeautifulSoup(new_webpage.content, "html.parser")
-
-                    # Function calls to display all necessary product information
-                    d["Product URL"].append("https://www.amazon.in"+link)
-                    d['Product Name'].append(get_title(new_soup))
-                    d['Product Price'].append(get_price(new_soup))
-                    d['Rating'].append(get_rating(new_soup))
-                    d['Number of reviews'].append(get_review_count(new_soup))
-                    d['Availability'].append(get_availability(new_soup))
-                    d['ASIN'].append(get_asin("https://www.amazon.in" + link,new_soup))
-                    d['Product Description'].append(get_product_description(new_soup))
-                    d['Sold by'].append(get_seller(new_soup))
-                    d['Manufacturer'].append(get_manufacturer(new_soup))
+                # Function calls to display all necessary product information
+                d["Product URL"].append("https://www.amazon.in"+link)
+                d['Product Name'].append(get_title(new_soup))
+                d['Product Price'].append(get_price(new_soup))
+                d['Rating'].append(get_rating(new_soup))
+                d['Number of reviews'].append(get_review_count(new_soup))
+                d['Availability'].append(get_availability(new_soup))
+                d['ASIN'].append(get_asin("https://www.amazon.in" + link,new_soup))
+                d['Product Description'].append(get_product_description(new_soup))
+                d['Sold by'].append(get_seller(new_soup))
+                d['Manufacturer'].append(get_manufacturer(new_soup))
+            
                 
-            else :
-                next_page_url="https://amazon.in" + soup.find_all("a", attrs={'class':'s-pagination-item s-pagination-button'})[-1].get("href")
-                webpage = requests.get(next_page_url, headers=HEADERS)
-                soup=BeautifulSoup(webpage.content,"html.parser")
-    
-                links = soup.find_all("a", attrs={'class':'a-link-normal s-no-outline'})
+            for i in range(0,int_val-1):
+                if i == 0:
+                    second_page_url="https://amazon.in" + soup.find_all("a", attrs={'class':'s-pagination-item s-pagination-button'})[0].get("href")
+                    webpage = requests.get(second_page_url, headers=HEADERS)
+                    soup=BeautifulSoup(webpage.content,"html.parser")
+                    # Fetch links as List of Tag Objects
+                    links = soup.find_all("a", attrs={'class':'a-link-normal s-no-outline'})
 
-                # Store the links
-                links_list = []
+                    # Store the links
+                    links_list = []
 
-                # Loop for extracting links from Tag Objects
-                for link in links:
-                    links_list.append(link.get('href')) 
-                for link in links_list:
-                    new_webpage = requests.get("https://www.amazon.in" + link, headers=HEADERS)
+                    # Loop for extracting links from Tag Objects
+                    for link in links:
+                        links_list.append(link.get('href')) 
+                    for link in links_list:
+                        new_webpage = requests.get("https://www.amazon.in" + link, headers=HEADERS)
 
-                    new_soup = BeautifulSoup(new_webpage.content, "html.parser")
+                        new_soup = BeautifulSoup(new_webpage.content, "html.parser")
 
-                    # Function calls to display all necessary product information
-                    d["Product URL"].append("https://www.amazon.in"+link)
-                    d['Product Name'].append(get_title(new_soup))
-                    d['Product Price'].append(get_price(new_soup))
-                    d['Rating'].append(get_rating(new_soup))
-                    d['Number of reviews'].append(get_review_count(new_soup))
-                    d['Availability'].append(get_availability(new_soup))
-                    d['ASIN'].append(get_asin("https://www.amazon.in" + link,new_soup))
-                    d['Product Description'].append(get_product_description(new_soup))
-                    d['Sold by'].append(get_seller(new_soup))
-                    d['Manufacturer'].append(get_manufacturer(new_soup))
-
+                        # Function calls to display all necessary product information
+                        d["Product URL"].append("https://www.amazon.in"+link)
+                        d['Product Name'].append(get_title(new_soup))
+                        d['Product Price'].append(get_price(new_soup))
+                        d['Rating'].append(get_rating(new_soup))
+                        d['Number of reviews'].append(get_review_count(new_soup))
+                        d['Availability'].append(get_availability(new_soup))
+                        d['ASIN'].append(get_asin("https://www.amazon.in" + link,new_soup))
+                        d['Product Description'].append(get_product_description(new_soup))
+                        d['Sold by'].append(get_seller(new_soup))
+                        d['Manufacturer'].append(get_manufacturer(new_soup))
+                    
+                else :
+                    next_page_url="https://amazon.in" + soup.find_all("a", attrs={'class':'s-pagination-item s-pagination-button'})[-1].get("href")
+                    webpage = requests.get(next_page_url, headers=HEADERS)
+                    soup=BeautifulSoup(webpage.content,"html.parser")
         
-        amazon_df = pd.DataFrame.from_dict(d)
-        amazon_df['Product Name'].replace('', np.nan, inplace=True)
-        amazon_df = amazon_df.dropna(subset=['Product Name'])
-        csv=convert_df(amazon_df)
-        st.download_button("Press to Download",csv,"file.csv","text/csv",key='download-csv')
+                    links = soup.find_all("a", attrs={'class':'a-link-normal s-no-outline'})
+
+                    # Store the links
+                    links_list = []
+
+                    # Loop for extracting links from Tag Objects
+                    for link in links:
+                        links_list.append(link.get('href')) 
+                    for link in links_list:
+                        new_webpage = requests.get("https://www.amazon.in" + link, headers=HEADERS)
+
+                        new_soup = BeautifulSoup(new_webpage.content, "html.parser")
+
+                        # Function calls to display all necessary product information
+                        d["Product URL"].append("https://www.amazon.in"+link)
+                        d['Product Name'].append(get_title(new_soup))
+                        d['Product Price'].append(get_price(new_soup))
+                        d['Rating'].append(get_rating(new_soup))
+                        d['Number of reviews'].append(get_review_count(new_soup))
+                        d['Availability'].append(get_availability(new_soup))
+                        d['ASIN'].append(get_asin("https://www.amazon.in" + link,new_soup))
+                        d['Product Description'].append(get_product_description(new_soup))
+                        d['Sold by'].append(get_seller(new_soup))
+                        d['Manufacturer'].append(get_manufacturer(new_soup))
+
+            
+            amazon_df = pd.DataFrame.from_dict(d)
+            amazon_df['Product Name'].replace('', np.nan, inplace=True)
+            amazon_df = amazon_df.dropna(subset=['Product Name'])
+            csv=convert_df(amazon_df)
+            st.download_button("Press to Download",csv,"file.csv","text/csv",key='download-csv')
+    except:
+        st.text('something went wrong')
+
 
 
 
