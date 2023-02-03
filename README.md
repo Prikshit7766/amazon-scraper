@@ -1,4 +1,4 @@
 # amazon-scraper
 
 deployment
-https://prikshit7766-amazon-scraper-app-v7fgae.streamlit.app/
+https://prikshit7766-amazon-scraper-app-ycqkbn.streamlit.app/
